@@ -1,0 +1,23 @@
+/**
+ *
+ * apply from: "${project.rootProject.file('common_function.gradle')}"
+
+ * 是否在Jenkins平台上打包
+ * @return
+ */
+boolean isJenkins() {
+    Map<String, String> map = System.getenv()
+    if (map == null){
+        return false
+    }
+    boolean hasBuildJob = map.containsKey("JOB_NAME")
+    boolean hasBuildNumber = map.containsKey("BUILD_NUMBER")
+    if (hasBuildJob && hasBuildNumber) {
+        return true
+    }
+    return false
+}
+//导出函数
+ext {
+    isJenkins = this.&isJenkins
+}

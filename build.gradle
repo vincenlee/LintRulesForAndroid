@@ -1,0 +1,117 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    
+    repositories {
+
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.3.3'
+        
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+//    Configuration classpathConfiguration = getConfigurations().getByName("classpath")
+//    classpathConfiguration.incoming.afterResolve{
+//        it.dependencies.all{
+//            println("afterResolve"+it.group + "   " + it.name)
+//            FileCollection collection = classpathConfiguration.fileCollection(it).filter {
+//                return it.name.endsWith(".aar") || it.name.endsWith(".jar")
+//            }
+//            //遍历过滤后的文件
+//            collection.each {
+//                println(it.absolutePath)
+//                rootProject.subprojects { subProject ->
+//                    if(!subProject.name.equals("lintrules")){
+//                        String lintDir = "${subProject.buildDir.absolutePath}/intermediates/lint/"
+//                        println(lintDir + "  " + it.absolutePath)
+////                    FileUtils.copyFile(it, new File(lintDir + "lint.jar"))
+//                        FileInputStream fis = null;
+//                        FileOutputStream fos = null;
+//                        FileChannel input = null;
+//                        FileChannel output = null;
+//                        File destFile = new File(lintDir + "lint.jar")
+//                        try {
+//                            fis = new FileInputStream(it);
+//                            fos = new FileOutputStream(destFile);
+//                            input = fis.getChannel();
+//                            output = fos.getChannel();
+//                            long size = input.size();
+//                            long pos = 0L;
+//
+//                            for(long count = 0L; pos < size; pos += output.transferFrom(input, pos, count)) {
+//                                count = size - pos > 31457280L?31457280L:size - pos;
+//                            }
+//                        } finally {
+//                            try {
+//                                if(output != null) {
+//                                    output.close();
+//                                }
+//                            } catch (IOException var2) {
+//                                ;
+//                            }
+//                            try {
+//                                if(fos != null) {
+//                                    fos.close();
+//                                }
+//                            } catch (IOException var2) {
+//                            }
+//                            try {
+//                                if(input != null) {
+//                                    input.close();
+//                                }
+//                            } catch (IOException var2) {
+//                            }
+//                            try {
+//                                if(fis != null) {
+//                                    fis.close();
+//                                }
+//                            } catch (IOException var2) {
+//                            }
+//                        }
+//
+//                        if(it.length() != destFile.length()) {
+//                            throw new IOException("Failed to copy full contents from \'" + srcFile + "\' to \'" + destFile + "\'");
+//                        } else {
+//
+//
+//                        }
+//                    }
+//
+//
+//                }
+//
+//            }
+//        }
+//    }
+    classpathConfiguration.dependencies.each {
+        println(it.name +"    dependencies          "+ it.group)
+    }
+
+
+
+}
+
+allprojects {
+    repositories {
+
+        jcenter()
+    }
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+        sourceCompatibility = org.gradle.api.JavaVersion.VERSION_1_8
+        targetCompatibility = org.gradle.api.JavaVersion.VERSION_1_8
+    }
+    tasks.withType(Javadoc) {
+        options.encoding = 'UTF-8'
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+}
+
+
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

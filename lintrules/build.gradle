@@ -1,0 +1,61 @@
+apply plugin: 'java'
+apply plugin: 'groovy'
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+//    compile 'com.android.tools.lint:lint-api:25.3.3'
+//    compile 'com.android.tools.lint:lint-checks:25.3.3'
+    compile 'com.android.tools.build:gradle:2.3.3'
+}
+
+sourceSets {
+    main {
+        groovy {
+            srcDir 'src/main/groovy'
+        }
+//        java {
+//            srcDir 'src/main/java'
+//        }
+
+        resources {
+            srcDir 'src/main/resources'
+        }
+    }
+}
+
+[compileJava, compileGroovy, javadoc]*.options*.encoding = 'UTF-8'
+/**
+ * Lint-Registry是lint的注册类
+ */
+jar {
+    manifest {
+        attributes("Lint-Registry": "com.ytjojo.lintjar.LintRegistry")
+    }
+}
+
+//定义lintJarOutput方法，在lintaar中被调用
+configurations {
+    lintJarOutput
+}
+
+dependencies {
+    //lintJarOutput方法，打jar包
+    lintJarOutput files(jar)
+}
+
+defaultTasks 'assemble'
+
+
+//mainClassName = "com.ytjojo.lintjar.LintRegistry"
+//
+//jar {
+//    manifest {
+//        attributes "Main-Class": "$mainClassName"
+//    }
+//
+//    from {
+//        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+//    }
+//}

@@ -1,0 +1,2 @@
+include ':app', ':lintrules', ':module_news', ':library'
+include ':module_article'

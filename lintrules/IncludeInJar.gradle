@@ -1,0 +1,28 @@
+configurations{
+    //declare custom config if necessary, otherwise just use compile
+    myLibs
+}
+dependencies {
+    //add lib/*.jar files to myLibs
+    myLibs fileTree(dir: 'lib', include: '*.jar')
+    compile {
+        //set compile configuration to extend from myLibs
+        extendsFrom myLibs
+    }
+}
+// task to copy libs to output/lib dir
+task copyToLib(type: Copy) {
+    into "$buildDir/output/lib"
+    from configurations.myLibs
+}
+
+jar {
+    //include contents of output dir
+    from "$buildDir/output"
+    manifest {
+        //...
+    }
+}
+
+//set build task to depend on copyToLib
+build.dependsOn(copyToLib)

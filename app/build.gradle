@@ -1,0 +1,125 @@
+apply plugin: 'com.android.application'
+//apply from: "${project.rootProject.file('common_function.gradle')}"
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.3"
+    defaultConfig {
+        applicationId "com.ytjojo.lintapp"
+        minSdkVersion 15
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    lintOptions {
+        textReport true // 输出lint报告
+        textOutput 'stdout'
+        abortOnError false // 遇到错误不停止
+    }
+}
+
+configurations {
+    lintJarImport
+}
+
+
+// 调用lintJarImport得到jar包，拷贝到指定目录
+task copyLintJar(type: Copy) {
+
+    from(configurations.lintJarImport) {
+        System.out.println("Copy::----------------------------------------------------------::")
+        rename {
+            String fileName ->
+                'lint.jar'
+        }
+
+    }
+    into 'build/intermediates/lint/'
+}
+
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile project(':module_news')
+//    compile project(':module_article')
+    // 调用lintjar的lintJarOutput方法，获得jar包
+    lintJarImport project(path: ':lintrules', configuration: 'lintJarOutput')
+    //    lintChecks project(':lintrules')
+}
+
+project.afterEvaluate {
+
+//    def compileLintTask = project.tasks.find{ it.name == 'prepareLintJar'}
+
+    def compileLintTask = project.tasks.find { it.name == 'compileLint' }
+    compileLintTask.doFirst{
+        println('compileLintTask ------------------------------------------------dofirst')
+    }
+    compileLintTask.dependsOn(copyLintJar)
+    project.getConfigurations().getByName("lintJarImport").incoming.dependencies.all {
+
+        println("------------"+ it.group+ "  group  " + it.name)
+    }
+}
+
+project.getGradle().addListener(new DependencyResolutionListener() {
+    @Override
+    void beforeResolve(ResolvableDependencies resolvableDependencies) {
+        //此回调会多次进入，我们只需要解析一次，因此只要进入，就remove，然后执行我们的解析操作
+        project.gradle.removeListener(this)
+        project.getRepositories().each { def repository ->
+            //repository.url就是maven服务的前缀路径，可能是文件协议，也可能是http协议，或是其他协议，如ftp
+        }
+        resolvableDependencies.afterResolve {
+            println(resolvableDependencies.getName() + " app path after 3  : " + resolvableDependencies.getPath())
+        }
+
+        println(resolvableDependencies.getName() + "app path   before : " + resolvableDependencies.getPath())
+    }
+
+    @Override
+    void afterResolve(ResolvableDependencies resolvableDependencies) {
+        println(resolvableDependencies.getName() + "app  path  after  : " + resolvableDependencies.getPath())
+    }
+})
+
+//project.configurations {
+//    String group = project.rootProject.getName();
+//    project.getConfigurations().all {
+//            it.name;
+//        HashMap<String,String> hashMap= new HashMap();
+//        hashMap.put("LintRulesForAndroid","module_news")
+//        it.exclude([module:'module_news'])
+//        it.excludeRules.each {
+////            println(it.group + "   " + it.module)
+//        }
+//
+//
+//
+//    }
+//
+//}
+
+task fatJar(type: Jar) {
+    classifier = 'all'
+    baseName = project.name + '-all'
+    from {
+        configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+    }
+}
+artifacts {
+    archives fatJar
+}
+
+
+
