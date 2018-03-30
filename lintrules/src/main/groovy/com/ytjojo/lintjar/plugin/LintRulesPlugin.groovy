@@ -104,7 +104,7 @@ class LintRulesPlugin implements Plugin<Project> {
         newOptions.htmlReport = true
 //不放在build下，防止被clean掉
         newOptions.htmlOutput = project.file("${project.projectDir}/lint-report/lint-report.html")
-        newOptions.xmlReport = false
+        newOptions.xmlReport = true
 
         lintTask.lintOptions = newOptions
         lintTask.doFirst {
