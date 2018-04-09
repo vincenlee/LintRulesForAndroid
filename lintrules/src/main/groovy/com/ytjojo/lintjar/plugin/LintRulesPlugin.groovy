@@ -13,8 +13,10 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.DependencySet
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.FileCollection
+import org.gradle.api.internal.artifacts.repositories.DefaultMavenLocalArtifactRepository
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.TaskState
+import org.gradle.internal.impldep.org.apache.maven.artifact.repository.MavenArtifactRepository
 import org.gradle.tooling.GradleConnector
 
 import java.util.zip.ZipFile
@@ -368,4 +370,112 @@ class LintRulesPlugin implements Plugin<Project> {
         AndroidProject modelProject = gradleConn.connect().getModel(AndroidProject.class)
         return modelProject
     }
+    private HashSet<String> getRepUrls(Project project){
+        def repoUrls = new HashSet()
+        repoUrls.add(project.repositories.jcenter().url.toString())
+        repoUrls.add(project.repositories.mavenCentral().url.toString())
+        //      repoUrls.add(project.repositories.google().url.toString())  gradle plugin 3.0 版本之后要加此仓库
+        project.repositories.each {
+            /**
+             * 不处理 FlatDirectoryArtifactRepository 和 IvyArtifactRepository
+             */
+            if (!(it instanceof DefaultMavenLocalArtifactRepository) && (it instanceof MavenArtifactRepository)) {
+                repoUrls.add(it.url)
+            }
+        }
+        return repoUrls;
+
+
+    }
+    static String getDependencyByDownload(Project project, String dependency, HashSet<String> repoUrls, String mavenLocalDepPath) {
+        def aarPath = ''
+        try {
+            def providedAarParent = new File(mavenLocalDepPath)
+            if (!providedAarParent.exists()) {
+                providedAarParent.mkdirs()
+            }
+            def split = dependency.split(':')
+            def depPath = split[0].replace('.', '/') + '/' + split[1].replace('.', '/') + '/' + split[2]
+            def depName = split[1] + '-' + split[2] + '.aar'
+            def depFile = new File(providedAarParent, depName)
+            if (depFile.exists()) {
+                return depFile.absolutePath
+            }
+            for (String url : repoUrls) {
+                def repoDepUrl = url.toString() + depPath + '/' + depName
+                if (!repoDepUrl.startsWith('file:')) {
+                    project.logger.info 'repoDepUrl : ' + repoDepUrl
+                    FileUtils.copyURLToFile(new URL(repoDepUrl), depFile)
+                    aarPath = "${providedAarParent.absolutePath}/${depName}"
+                    break
+                }
+            }
+        } catch (Exception e) {
+            project.logger.error e.toString()
+            aarPath = null
+        }
+        return aarPath
+    }
+
+    private void wrong(Project project){
+
+
+        Configuration configuration = project.getConfigurations().create("providedAar") {
+            //进行传递依赖
+            it.setTransitive(true)
+            it.resolutionStrategy {
+                //SNAPSHOT版本更新时间为0s
+                cacheChangingModulesFor(0, 'seconds')
+                //动态版本更新实际为5分钟
+                cacheDynamicVersionsFor(5, 'minutes')
+            }
+        }
+        //遍历解析出来的所有依赖
+        configuration.incoming.dependencies.all {
+            //过滤收集aar和jar
+            FileCollection collection = configuration.fileCollection(it).filter {
+                return it.name.endsWith(".aar") || it.name.endsWith(".jar")
+            }
+            //遍历过滤后的文件
+            collection.each {
+                if (it.name.endsWith(".aar")) {
+                    //如果是aar，则提取里面的jar文件
+                    FileCollection jarFormAar = project.zipTree(it).filter {
+                        it.name == "classes.jar"
+                    }
+                    //将jar依赖添加到provided的scope中
+                    project.dependencies.add("provided", jarFormAar)
+                } else if (it.name.endsWith(".jar")) {
+                    //如果是jar则直接添加
+                    //将jar依赖添加到provided的scope中
+                    project.dependencies.add("provided", project.files(it))
+                }
+            }
+        }
+    }
+
+    private void changeLog(Project project){
+        //redirect warning log to info log
+        def listenerBackedLoggerContext = project.getLogger().getMetaClass().getProperty(project.getLogger(), "context")
+        def originalOutputEventListener = listenerBackedLoggerContext.getOutputEventListener()
+        def originalOutputEventLevel = listenerBackedLoggerContext.getLevel()
+        listenerBackedLoggerContext.setOutputEventListener({def outputEvent ->
+            def logLevel = originalOutputEventLevel.name()
+            if (!("QUIET".equalsIgnoreCase(logLevel) || "ERROR".equalsIgnoreCase(logLevel))) {
+                if ("WARN".equals(outputEvent.getLogLevel().name())) {
+                    String message = outputEvent.getMessage()
+                    //Provided dependencies can only be jars.
+                    //provided dependencies can only be jars.
+                    if (message != null && (message.contains("Provided dependencies can only be jars.") || message.contains("provided dependencies can only be jars. "))) {
+                        project.logger.info(message)
+                        return
+                    }
+                }
+                if (originalOutputEventListener != null) {
+                    originalOutputEventListener.onOutput(outputEvent)
+                }
+            }
+        })
+    }
+
 }
