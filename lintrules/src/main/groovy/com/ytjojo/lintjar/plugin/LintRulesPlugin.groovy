@@ -15,6 +15,7 @@ import com.android.builder.model.AndroidProject
 import com.android.builder.model.SourceProvider
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
+import org.codehaus.groovy.runtime.StringGroovyMethods
 import org.gradle.api.Action
 import org.gradle.api.DomainObjectSet
 import org.gradle.api.GradleException
@@ -774,4 +775,13 @@ class LintRulesPlugin implements Plugin<Project> {
 //    private static List<File> getGeneratedSourceDirs(BaseVariant variantData) {
 //        return variantData.getSourceFolders(SourceKind.JAVA).collect { it.dir }
 //    }
+
+    public static String pathJoin(String...paths) {
+        paths.join(File.separator)
+    }
+    public static String capitalize(String a){
+//        StringGroovyMethods.capitalize(a)
+        String s = a.substring(1)
+        return "${a[0].toUpperCase()}${s.toLowerCase()}"
+    }
 }

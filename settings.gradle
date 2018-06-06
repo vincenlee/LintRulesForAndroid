@@ -1,2 +1,2 @@
-include ':app', ':lintrules', ':module_news', ':library'
+include ':app', ':lintrules', ':module_news', ':library', ':module_api'
 include ':module_article'
