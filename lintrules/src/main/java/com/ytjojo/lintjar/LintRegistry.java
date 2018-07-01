@@ -11,7 +11,8 @@ public class LintRegistry extends IssueRegistry {
     public List<Issue> getIssues() {
 //        return Arrays.asList(InitCallDetector.ISSUE, LogDetector.ISSUE);
         return Arrays.asList(ProjectResouceDetector.ISSUE,InitCallDetector.ISSUE,RetrofitObserverCheck.ISSUE
-                ,NamedForPrimitiveTypesOfProvidersEnforcer.ISSUE
+                ,NamedForPrimitiveTypesOfProvidersEnforcer.ISSUE,ImportIssue.ISSUE
+                ,SetValueIssue.ISSUE
         ,ProjectResouceDetector.ISSUE_DUPLICATE);
     }
 }
