@@ -1,5 +1,5 @@
 apply plugin: 'com.android.library'
-
+apply plugin: 'maven'
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.3"
@@ -98,3 +98,59 @@ tasks.whenTaskAdded { task ->
 //        println(resolvableDependencies.getName() + " path  after  : " +resolvableDependencies.getPath() )
 //    }
 //})
+
+
+
+task copyProperties(type: Copy) {
+//    delete 'build/intermediates/api/'
+    from fileTree('/src/main/java'){
+
+//        include '**/*.api'
+        System.out.println("+++++++++++copyProperties================")
+//        project.file('src')
+//        project.files("src").filter {
+//            it.name.endsWith(".api")
+//        }
+
+    }
+    into('build/intermediates/api'){
+        System.out.println("+++++++++++copyProperties================")
+    }
+    doLast{
+        System.out.println("+++++++++++doLast================")
+    }
+
+}
+
+project.afterEvaluate{
+
+//    def compileLintTask = project.tasks.find { it.name == 'compileLint' }
+//    compileLintTask.dependsOn(copyProperties)
+    project.getTasks().findByName('preBuild').dependsOn(copyProperties)
+}
+task fatJar(type: Jar) {
+    include '**/*.api'
+    from(project.file('/src/main/java/')){
+        include '**/*.api'
+    }
+    into('api')
+
+}
+//fatJar.dependsOn(copyLintJar)
+artifacts {
+    archives fatJar
+}
+//build.dependsOn(copyProperties)
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            version = VERSION_NAME
+            group = GROUP
+
+            pom.groupId = GROUP
+            pom.artifactId = POM_ARTIFACT_ID
+            pom.version = VERSION_NAME
+            repository(url: uri('../maven'))
+        }
+    }
+}
