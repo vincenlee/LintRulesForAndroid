@@ -103,9 +103,10 @@ tasks.whenTaskAdded { task ->
 
 task copyProperties(type: Copy) {
 //    delete 'build/intermediates/api/'
+    destinationDir=project.file('build/generated/source/api')
     from fileTree('/src/main/java'){
 
-//        include '**/*.api'
+        include '**/*.api'
         System.out.println("+++++++++++copyProperties================")
 //        project.file('src')
 //        project.files("src").filter {
@@ -113,8 +114,9 @@ task copyProperties(type: Copy) {
 //        }
 
     }
-    into('build/intermediates/api'){
-        System.out.println("+++++++++++copyProperties================")
+//    into('build/intermediates/api')
+    rename{String fileName->
+        (fileName.substring(0,fileName.length()-4)+'.java')
     }
     doLast{
         System.out.println("+++++++++++doLast================")
